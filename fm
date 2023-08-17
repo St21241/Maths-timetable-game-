@@ -1,13 +1,13 @@
 import random
 import tkinter as tk
-from tkinter import messagebox
+import ctypes
 
 class TimesTableGame:
     def __init__(self, level):
         self.level = level
         self.current_question = 0
         self.score = 0
-        self.questions = 5  # Number of questions for each level
+        self.questions = 5
         self.questions_list = []
         self.user_answers = []
 
@@ -55,7 +55,6 @@ class TimesTableGame:
 
         random.shuffle(options)
 
-        # Add capital letters (A, B, C, D) in front of options
         options_with_letters = [f"{chr(65 + i)}. {option}" for i, option in enumerate(options)]
         return options_with_letters
 
@@ -63,47 +62,43 @@ class TimesTableGameGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("Multiplication Game")
-
-        self.set_bg_color("#38b6ff")  # Set background color for the main interface
-
-        self.game_title_label = tk.Label(root, text="Multiplication Game", font=("Anton", 18, "bold"))
-        self.game_title_label.pack(pady=10)  # Display the title when the window is first opened
-
+        self.set_bg_color("#38b6ff")
+        self.game_title_label = tk.Label(root, text="Multiplication Game", font=("Anton", 50, "bold"))
+        self.game_title_label.pack(pady=20)
         self.level_frame = tk.Frame(root)
-        self.level_frame.pack(pady=10)
-        self.level1_btn = tk.Button(self.level_frame, text="Level 1", command=lambda: self.start_game(1))
-        self.level2_btn = tk.Button(self.level_frame, text="Level 2", command=lambda: self.start_game(2))
-        self.level3_btn = tk.Button(self.level_frame, text="Level 3", command=lambda: self.start_game(3))
-        self.level1_btn.pack(side=tk.LEFT, padx=5)
-        self.level2_btn.pack(side=tk.LEFT, padx=5)
-        self.level3_btn.pack(side=tk.LEFT, padx=5)
-
-        self.exit_btn = tk.Button(root, text="Exit", command=root.quit)
-        self.exit_btn.pack(pady=5)  # Display the Exit button below the level selection
-
+        self.level_frame.pack(pady=20)
+        self.level1_btn = tk.Button(self.level_frame, text="Level 1", font=("Anton", 20), command=lambda: self.start_game(1))
+        self.level2_btn = tk.Button(self.level_frame, text="Level 2", font=("Anton", 20), command=lambda: self.start_game(2))
+        self.level3_btn = tk.Button(self.level_frame, text="Level 3", font=("Anton", 20), command=lambda: self.start_game(3))
+        self.level1_btn.pack(side=tk.LEFT, padx=10)
+        self.level2_btn.pack(side=tk.LEFT, padx=10)
+        self.level3_btn.pack(side=tk.LEFT, padx=10)
+        self.exit_btn = tk.Button(root, text="Exit", font=("Anton", 20), command=root.quit)
+        self.exit_btn.pack(pady=10)
         self.result_label = tk.Label(root, text="")
         self.score_label = tk.Label(root, text="")
-        self.play_again_btn = tk.Button(root, text="Play Again", command=self.restart_game)
-
-        # Centering the grid and question_label
+        self.play_again_btn = tk.Button(root, text="Play Again", font=("Anton", 20), command=self.restart_game)
         self.grid_frame = tk.Frame(root)
-        self.grid_frame.pack(pady=10)
-
+        self.grid_frame.pack(pady=20)
         self.game = None
 
+        user32 = ctypes.windll.user32
+        screen_width = user32.GetSystemMetrics(0)
+        screen_height = user32.GetSystemMetrics(1)
+        self.root.geometry(f"{screen_width}x{screen_height}")
+
     def set_bg_color(self, color):
-        # Function to set the background color for all the widgets in the interface
         self.root.configure(bg=color)
         for widget in self.root.winfo_children():
             widget.configure(bg=color)
 
     def start_game(self, level):
-        self.game_title_label.pack_forget()  # Hide the title when the game starts
+        self.game_title_label.pack_forget()
         self.exit_btn.pack_forget()
         self.level_frame.pack_forget()
         self.game = TimesTableGame(level)
         self.game.generate_questions()
-        self.question_label = tk.Label(self.grid_frame, text="", font=("Anton", 14))
+        self.question_label = tk.Label(self.grid_frame, text="", font=("Anton", 24))
         self.question_label.grid(row=0, column=0, columnspan=2, pady=5)
         self.option_buttons = []
         self.ask_question()
@@ -112,19 +107,23 @@ class TimesTableGameGUI:
         if not self.game.is_game_over():
             current_question = self.game.get_current_question()
             options = self.game.get_options()
-
-            self.question_label.config(text=f"What is {current_question[0]} x {current_question[1]}?")
-
+            self.question_label.config(text=f"What is {current_question[0]} x {current_question[1]}?", font=("Anton", 30))
             for button in self.option_buttons:
                 button.grid_forget()
-
             self.option_buttons = []
             for i, option in enumerate(options):
                 row, col = divmod(i, 2)
-                btn = tk.Button(self.grid_frame, text=str(option), font=("Anton", 12), command=lambda ans=option: self.submit_answer(ans))
-                btn.grid(row=row + 1, column=col, padx=5, pady=5, sticky="w")  # Use "sticky" to align to the left
+                btn = tk.Button(self.grid_frame, text=str(option), font=("Anton", 50), command=lambda ans=option: self.submit_answer(ans))
+                btn.grid(row=row + 1, column=col, padx=15, pady=15, sticky="w")
+                if i == 0:
+                    btn.config(bg="#38b6ff")  
+                elif i == 1:
+                    btn.config(bg="#ff3838")  
+                elif i == 2:
+                    btn.config(bg="#38ff58")  
+                elif i == 3:
+                    btn.config(bg="#ff38af")  
                 self.option_buttons.append(btn)
-
         else:
             self.show_results()
 
@@ -136,23 +135,19 @@ class TimesTableGameGUI:
 
     def show_results(self):
         self.question_label.grid_forget()
-        self.result_label.config(text="Game Over!", font=("Anton", 16))
-        self.score_label.config(text=f"Your score: {self.game.get_score()} / {self.game.questions}", font=("Anton", 14))
-        self.view_answers_btn = tk.Button(self.grid_frame, text="View Answers", font=("Anton", 12), command=self.show_answers)
+        self.result_label.config(text="Game Over!", font=("Anton", 40))
+        self.score_label.config(text=f"Your score: {self.game.get_score()} / {self.game.questions}", font=("Anton", 20))
+        self.view_answers_btn = tk.Button(self.grid_frame, text="View Answers", font=("Anton", 16), command=self.show_answers, bg="#38b6ff")
         self.view_answers_btn.grid(row=3, column=0, columnspan=2, pady=5)
-        
-        # Display correct answer for the last question
-        if self.game.get_user_answers():
-            last_question, _, correct_answer = self.game.get_user_answers()[-1]
-            correct_answer_label = tk.Label(self.grid_frame, text=f"Correct Answer: {correct_answer}", font=("Anton", 12))
-            correct_answer_label.grid(row=2, column=0, columnspan=2, pady=5)
 
     def show_answers(self):
         self.view_answers_btn.grid_forget()
         self.score_label.grid_forget()
-        self.result_label.config(text="Your Answers:", font=("Anton", 14))
+        self.result_label.config(text="Your Answers:", font=("Anton", 20))
         self.answers_frame = tk.Frame(self.root)
         self.answers_frame.pack(pady=10)
+        self.back_btn = tk.Button(self.root, text="Back", font=("Anton", 20), command=self.show_main_interface)
+        self.back_btn.pack(pady=10)
         self.current_question = 0
         self.show_next_answer()
 
@@ -162,33 +157,22 @@ class TimesTableGameGUI:
             question_text = f"{current_question[0]} x {current_question[1]} = "
             user_answer_text = f"Your Answer: {user_answer}"
             correct_answer_text = f"Correct Answer: {correct_answer}"
-            tk.Label(self.answers_frame, text=f"Question {self.current_question + 1}: {question_text}", font=("Anton", 12)).pack(anchor=tk.W)
-            tk.Label(self.answers_frame, text=user_answer_text, font=("Anton", 12)).pack(anchor=tk.W)
-            tk.Label(self.answers_frame, text=correct_answer_text, font=("Anton", 12)).pack(anchor=tk.W)
-
+            tk.Label(self.answers_frame, text=f"Question {self.current_question + 1}: {question_text}", font=("Anton", 16)).pack(anchor=tk.W)
+            tk.Label(self.answers_frame, text=user_answer_text, font=("Anton", 16)).pack(anchor=tk.W)
+            tk.Label(self.answers_frame, text=correct_answer_text, font=("Anton", 16)).pack(anchor=tk.W)
             self.current_question += 1
-            self.next_btn = tk.Button(self.answers_frame, text="Next", font=("Anton", 12), command=self.show_next_answer)
+            self.next_btn = tk.Button(self.answers_frame, text="Next", font=("Anton", 16), command=self.show_next_answer)
             self.next_btn.pack(pady=10)
-
         else:
             self.show_play_again_interface()
 
     def show_play_again_interface(self):
         self.answers_frame.pack_forget()
-
-        # Add a new frame for the play again interface
+        self.back_btn.pack_forget()
         self.play_again_frame = tk.Frame(self.root)
         self.play_again_frame.pack(pady=10)
-
-        # Display final score
-        final_score_label = tk.Label(self.play_again_frame, text=f"Your final score: {self.game.get_score()} / {self.game.questions}", font=("Anton", 14))
-        final_score_label.pack()
-
-        # Play again button
-        play_again_btn = tk.Button(self.play_again_frame, text="Play Again", font=("Anton", 12), command=self.restart_game)
+        play_again_btn = tk.Button(self.play_again_frame, text="Play Again", font=("Anton", 16), command=self.restart_game)
         play_again_btn.pack(pady=10)
-
-        # Re-display the game title and Exit button for the level selection screen
         self.game_title_label.pack()
         self.exit_btn.pack()
 
@@ -196,6 +180,13 @@ class TimesTableGameGUI:
         self.play_again_frame.pack_forget()
         self.level_frame.pack(pady=10)
         self.exit_btn.pack(pady=5)
+
+    def show_main_interface(self):
+        self.answers_frame.pack_forget()
+        self.back_btn.pack_forget()
+        self.game_title_label.pack()
+        self.level_frame.pack(pady=20)
+        self.exit_btn.pack(pady=10)
 
 if __name__ == "__main__":
     root = tk.Tk()
